@@ -4,7 +4,9 @@ on:
   push:
   pull_request:
   schedule:
+    # update images every month
     - cron: "1 1 12 * *"
+  workflow_dispatch:
 
 # You may need to go to Repo Settings > Actions > General > Workflow permissions and select Read and Write permissions
 permissions:
