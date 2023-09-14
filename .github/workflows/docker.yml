@@ -1,0 +1,43 @@
+name: Publish Docker images
+
+on:
+  push:
+  pull_request:
+  schedule:
+    - cron: "1 1 12 * *"
+jobs:
+  docker:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        image:
+          - cross-aarch64-unknown-linux-gnu
+          - cross-armv7-unknown-linux-gnueabihf
+    steps:
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Docker meta
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ matrix.image }}
+          # https://github.com/docker/metadata-action
+          tags: |
+            type=schedule,pattern={{date 'YYYYMM'}}
+            type=ref,event=branch
+            type=ref,event=pr
+            type=semver,pattern={{version}}
+            type=semver,pattern={{major}}.{{minor}}
+
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v5
+        with:
+          file: ./docker/Dockerfile.${{ matrix.image }}
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
